@@ -12,7 +12,7 @@ const mockTasks: Task[] = [
     category: 'learning',
     difficulty: 'medium',
     xpReward: 50,
-    xp:50,
+    xp: 50,
     status: 'completed',
     createdAt: new Date('2024-01-10'),
     completedAt: new Date('2024-01-10T14:30:00'),
@@ -36,7 +36,7 @@ const mockTasks: Task[] = [
     category: 'fitness',
     difficulty: 'medium',
     xpReward: 40,
-    xp:40,
+    xp: 40,
     status: 'completed',
     createdAt: new Date('2024-01-11'),
     completedAt: new Date('2024-01-11T07:00:00'),
@@ -56,7 +56,7 @@ const mockTasks: Task[] = [
     category: 'professional',
     difficulty: 'hard',
     xpReward: 100,
-    xp:100,
+    xp: 100,
     status: 'in-progress',
     createdAt: new Date('2024-01-12'),
     dueDate: new Date('2024-01-15'),
@@ -73,7 +73,7 @@ const mockTasks: Task[] = [
     category: 'personal',
     difficulty: 'easy',
     xpReward: 20,
-    xp:20,
+    xp: 20,
     status: 'pending',
     createdAt: new Date('2024-01-12'),
     verificationRequired: false,
@@ -98,38 +98,39 @@ export const useTasks = () => {
     }, 500);
   }, []);
 
-  const addTask = (title: string, difficulty: TaskDifficulty, category: TaskCategory) => {
+  const addTask = (title: string, difficulty: TaskDifficulty, category: TaskCategory): Task => {
     let xpReward = 0;
     if (difficulty === 'easy') xpReward = 10;
     else if (difficulty === 'medium') xpReward = 25;
     else if (difficulty === 'hard') xpReward = 50;
 
     const newTask: Task = {
-  id: uuidv4(),
-  userId: '1',
-  title,
-  description: '',
-  category,
-  difficulty,
-  xpReward,
-  xp:xpReward,
-  status: 'in-progress',
-  createdAt: new Date(), // ✅ fixed
-  verificationRequired: false,
-  verificationMethod: 'self-report',
-  tags: [],
-  isRecurring: false
-};
-
+      id: uuidv4(),
+      userId: '1',
+      title,
+      description: '',
+      category,
+      difficulty,
+      xpReward,
+      xp: xpReward,
+      status: 'in-progress',
+      createdAt: new Date(),
+      verificationRequired: false,
+      verificationMethod: 'self-report',
+      tags: [],
+      isRecurring: false
+    };
 
     setTasks(prev => [newTask, ...prev]);
     return newTask;
   };
 
   const updateTask = (taskId: string, updates: Partial<Task>) => {
-    setTasks(prev => prev.map(task => 
-      task.id === taskId ? { ...task, ...updates } : task
-    ));
+    setTasks(prev =>
+      prev.map(task =>
+        task.id === taskId ? { ...task, ...updates } : task
+      )
+    );
   };
 
   const completeTask = (taskId: string, proof?: Task['proof']) => {

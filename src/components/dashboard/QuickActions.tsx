@@ -1,44 +1,35 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Timer, Users, Sword, Loader2 } from 'lucide-react';
-import TaskModal from '../../components/dashboard/TaskModal';
+import { Plus, Timer, Users, Sword } from 'lucide-react';
+import TaskModal from './TaskModal'; // ✅ Corrected import
 import { FocusMode } from './FocusMode';
 import { useNavigate } from 'react-router-dom';
-import { Task } from '../../types'; // Make sure Task type is correctly imported
-
-const ICON_STYLE = { width: 24, height: 24 };
+import { Task } from '../../types'; // ✅ Make sure this path matches your structure
 
 type Action = {
   label: string;
   icon: React.ElementType;
   color: string;
   action: () => void;
-  loading?: boolean;
 };
 
 export const QuickActions: React.FC = () => {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showFocusMode, setShowFocusMode] = useState(false);
   const [findingTeammate, setFindingTeammate] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null); // ADDED
   const navigate = useNavigate();
 
-  const handleFindTeammates = async () => {
+  const handleFindTeammates = () => {
     setFindingTeammate(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+    setTimeout(() => {
       alert('You have been matched with a teammate!');
-    } catch (error) {
-      alert('Failed to find teammates. Please try again.');
-    } finally {
       setFindingTeammate(false);
-    }
+    }, 2000);
   };
 
-  const handleSaveTask = (newTask: Task) => {
-    console.log('Saved task:', newTask);
-    // TODO: Send to backend or update local state
-    setShowTaskModal(false);
+  const handleAddTask = (newTask: Task) => {
+    console.log('New task added:', newTask);
+    // You can integrate this with global task state later
   };
 
   const actions: Action[] = [
@@ -46,10 +37,7 @@ export const QuickActions: React.FC = () => {
       label: 'New Task',
       icon: Plus,
       color: 'bg-green-600 hover:bg-green-700',
-      action: () => {
-        setSelectedTask(null); // New task
-        setShowTaskModal(true);
-      },
+      action: () => setShowTaskModal(true),
     },
     {
       label: 'Focus Session',
@@ -65,10 +53,9 @@ export const QuickActions: React.FC = () => {
     },
     {
       label: 'Find Teammates',
-      icon: findingTeammate ? Loader2 : Users,
+      icon: Users,
       color: 'bg-orange-600 hover:bg-orange-700',
       action: handleFindTeammates,
-      loading: findingTeammate,
     },
   ];
 
@@ -76,41 +63,38 @@ export const QuickActions: React.FC = () => {
     <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
       <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {actions.map(({ label, icon: Icon, color, action, loading }) => (
-          <motion.button
-            key={label}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={action}
-            className={`
-              ${color}
-              text-white p-4 rounded-lg
-              flex flex-col items-center space-y-2
-              transition-colors duration-200
-              ${loading ? 'opacity-75' : ''}
-            `}
-            disabled={loading}
-            aria-busy={loading}
-            aria-label={label}
-          >
-            {loading ? (
-              <Loader2 style={ICON_STYLE} className="animate-spin" />
-            ) : (
-              <Icon style={ICON_STYLE} />
-            )}
-            <span className="text-sm font-medium">
-              {loading ? 'Finding...' : label}
-            </span>
-          </motion.button>
-        ))}
+      <div className="grid grid-cols-2 gap-3">
+        {actions.map(({ label, icon: Icon, color, action }) => {
+          const isFinding = label === 'Find Teammates' && findingTeammate;
+          return (
+            <motion.button
+              key={label}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={action}
+              className={`
+                ${color}
+                text-white p-4 rounded-lg
+                flex flex-col items-center space-y-2
+                transition-colors duration-200
+              `}
+              disabled={isFinding}
+            >
+              <Icon className="w-6 h-6" />
+              <span className="text-sm font-medium">
+                {isFinding ? 'Finding...' : label}
+              </span>
+            </motion.button>
+          );
+        })}
       </div>
 
+      {}
       {showTaskModal && (
         <TaskModal
-          task={selectedTask}
+          isOpen={showTaskModal}
           onClose={() => setShowTaskModal(false)}
-          onSave={handleSaveTask}
+          onAddTask={handleAddTask}
         />
       )}
 

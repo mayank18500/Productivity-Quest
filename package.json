@@ -10,11 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.4",
     "@types/uuid": "^10.0.0",
     "clsx": "^2.1.1",
     "date-fns": "^3.3.1",
     "framer-motion": "^11.0.8",
     "lucide-react": "^0.344.0",
+    "openai": "^5.5.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.22.0",

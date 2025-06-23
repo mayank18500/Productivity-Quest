@@ -1,25 +1,23 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { DifficultyBadge } from './DifficultyBadge';
-import { 
-  Clock, 
-  CheckCircle2, 
-  Play, 
-  Camera, 
-  Link as LinkIcon, 
+
+import {
+  Clock,
+  CheckCircle2,
+  Play,
+  Camera,
+  Link as LinkIcon,
   Users,
   Calendar,
   Star
 } from 'lucide-react';
 import { Task } from '../../types';
-import { XPGainAnimation } from './XPGainAnimation';
+import { XPGainAnimation } from '../../components/ui/XPGainAnimation';
 
 interface TaskCardProps {
   task: Task;
   onComplete: (taskId: string) => void;
   onUpdate: (taskId: string, updates: Partial<Task>) => void;
-  onEdit?: (taskId: string) => void;
-  onClose?: () => void; // Add this line
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onComplete, onUpdate }) => {
@@ -96,7 +94,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onComplete, onUpdate }
             </div>
             <div className="flex items-center space-x-1 text-gaming-gold">
               <Star className="w-4 h-4" />
-              <span className="text-sm font-medium">{task.xpReward}</span>
+              <span className="text-sm font-medium">{task.xp}</span>
             </div>
           </div>
         </div>
@@ -104,7 +102,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onComplete, onUpdate }
         {task.tags && task.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {task.tags.map(tag => (
-              <span 
+              <span
                 key={tag}
                 className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded"
               >
@@ -183,27 +181,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onComplete, onUpdate }
             )}
           </div>
         )}
-          {task.target && (
-            <div className="text-right text-xs text-gray-300 mt-2">
-    🎯        Target: <span className="text-white font-medium">{task.target}</span>
-            </div>
-          )}
-
       </motion.div>
-    <DifficultyBadge 
-    difficulty={task.difficulty}
-    size="sm"
-  />
-  
-  <div className="flex items-center space-x-1 text-gaming-gold">
-    <Star className="w-4 h-4" />
-    <span className="text-sm font-medium">{task.xp}</span>
-  </div>
 
-      <XPGainAnimation 
-        xp={task.xpReward} 
-        trigger={showXPGain} 
-        onComplete={() => setShowXPGain(false)} 
+      <XPGainAnimation
+        xp={task.xp}
+        trigger={showXPGain}
+        onComplete={() => setShowXPGain(false)}
       />
     </>
   );

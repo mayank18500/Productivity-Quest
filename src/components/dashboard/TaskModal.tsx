@@ -1,238 +1,162 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Dialog } from '@headlessui/react';
 import { motion } from 'framer-motion';
-import {
-  Clock,
-  CheckCircle2,
-  Play,
-  Camera,
-  Link as LinkIcon,
-  Users,
-  Calendar,
-  Star,
-  Edit
-} from 'lucide-react';
-import { Task } from '../../types';
-import { XPGainAnimation } from '../../components/ui/XPGainAnimation';
-import { DifficultyBadge } from '../ui/DifficultyBadge'; // New component
-
-// Constants for better maintainability
-const STATUS_COLORS = {
-  pending: 'border-gray-600 bg-gray-800/50',
-  'in-progress': 'border-blue-500 bg-blue-900/20',
-  completed: 'border-green-500 bg-green-900/20',
-  failed: 'border-red-500 bg-red-900/20',
-  verified: 'border-purple-500 bg-purple-900/20'
-};
-
-const CATEGORY_ICONS: Record<string, string> = {
-  personal: '🎯',
-  professional: '💼',
-  social: '👥',
-  habits: '🔄',
-  learning: '📚',
-  fitness: '💪',
-  creative: '🎨'
-};
+import { Plus } from 'lucide-react';
+import { Task, TaskCategory } from '../../types';
 
 interface TaskModalProps {
-  task: Task;
-  onComplete: (taskId: string) => void;
-  onUpdate: (taskId: string, updates: Partial<Task>) => void;
-  onEdit?: (taskId: string) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  onAddTask: (task: Task) => void;
 }
 
-export const TaskModal: React.FC<TaskModalProps> = React.memo(({ 
-  task, 
-  onComplete, 
-  onUpdate,
-  onEdit 
-}) => {
-  const [showXPGain, setShowXPGain] = useState(false);
-  const [isCompleting, setIsCompleting] = useState(false);
-
-  const isOverdue = useMemo(() => (
-    task.dueDate && 
-    new Date() > new Date(task.dueDate) && 
-    task.status !== 'completed'
-  ), [task.dueDate, task.status]);
-
-  const handleComplete = async () => {
-    if (task.status !== 'completed') {
-      setIsCompleting(true);
-      try {
-        await onComplete(task.id);
-        setShowXPGain(true);
-      } finally {
-        setIsCompleting(false);
-      }
-    }
+// Simulated AI XP suggestion
+const getSuggestedXP = (
+  title: string,
+  description: string,
+  difficulty: string,
+  category: string
+): number => {
+  const baseXP = {
+    easy: 50,
+    medium: 100,
+    hard: 200,
+    legendary: 300
   };
 
-  const handleStartTask = () => {
-    if (task.status === 'pending') {
-      onUpdate(task.id, { status: 'in-progress' });
-    }
-  };
+  let xp = baseXP[difficulty as keyof typeof baseXP] || 50;
+  if (description.length > 100) xp += 20;
+  if (title.toLowerCase().includes('project')) xp += 30;
+  if (category === 'fitness') xp += 20;
 
-  const statusClass = isOverdue 
-    ? 'border-red-500 bg-red-900/30' 
-    : STATUS_COLORS[task.status];
+  return Math.min(xp, 1000); // limit max XP
+};
+
+const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAddTask }) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState<TaskCategory>('personal');
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | 'legendary'>('easy');
+  const [xp, setXP] = useState(50);
+
+  useEffect(() => {
+    const newXP = getSuggestedXP(title, description, difficulty, category);
+    setXP(newXP);
+  }, [title, description, difficulty, category]);
+
+  const handleSubmit = () => {
+    if (!title.trim()) return;
+
+    const newTask: Task = {
+      id: Date.now().toString(),
+      userId: '1',
+      title,
+      description,
+      category,
+      difficulty,
+      xpReward: xp,
+      xp,
+      status: 'pending',
+      createdAt: new Date(),
+      verificationRequired: false,
+      verificationMethod: 'self-report',
+      tags: [],
+      isRecurring: false
+    };
+
+    onAddTask(newTask);
+    onClose();
+    setTitle('');
+    setDescription('');
+    setCategory('personal');
+    setDifficulty('easy');
+  };
 
   return (
-    <>
-      <motion.div
-        layout
-        className={`p-4 rounded-lg border-2 transition-all duration-200 hover:scale-[1.02] ${statusClass}`}
-        whileHover={{ y: -2 }}
-        aria-labelledby={`task-title-${task.id}`}
-      >
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <span className="text-xl" aria-hidden="true">
-              {CATEGORY_ICONS[task.category] || '📝'}
-            </span>
-            <div>
-              <h3 
-                id={`task-title-${task.id}`}
-                className="font-semibold text-white"
+    <Dialog open={isOpen} onClose={onClose} className="fixed z-50 inset-0 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <div className="fixed inset-0 bg-black/60" />
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-gray-900 text-white rounded-lg p-6 w-full max-w-md z-10 shadow-lg"
+        >
+          <Dialog.Title className="text-xl font-semibold mb-4">Create New Task</Dialog.Title>
+
+          <div className="space-y-3">
+            <input
+              type="text"
+              placeholder="Task title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-3 py-2 rounded bg-gray-800 text-white border border-gray-700 focus:outline-none"
+            />
+
+            <textarea
+              placeholder="Description (optional)"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3 py-2 rounded bg-gray-800 text-white border border-gray-700 focus:outline-none"
+            />
+
+            <div className="flex gap-2">
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as TaskCategory)}
+                className="flex-1 px-3 py-2 rounded bg-gray-800 text-white border border-gray-700"
               >
-                {task.title}
-              </h3>
-              {task.description && (
-                <p className="text-sm text-gray-400 mt-1">
-                  {task.description}
-                </p>
-              )}
+                <option value="personal">Personal</option>
+                <option value="professional">Professional</option>
+                <option value="social">Social</option>
+                <option value="habits">Habits</option>
+                <option value="learning">Learning</option>
+                <option value="fitness">Fitness</option>
+                <option value="creative">Creative</option>
+              </select>
+
+              <select
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value as Task['difficulty'])}
+                className="flex-1 px-3 py-2 rounded bg-gray-800 text-white border border-gray-700"
+              >
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+                <option value="legendary">Legendary</option>
+              </select>
             </div>
+
+            <input
+              type="number"
+              min={10}
+              max={1000}
+              step={10}
+              value={xp}
+              readOnly
+              className="w-full px-3 py-2 rounded bg-gray-700 text-white border border-gray-700 cursor-not-allowed"
+              placeholder="XP Reward"
+            />
           </div>
 
-          <div className="flex items-center space-x-2">
-            <DifficultyBadge difficulty={task.difficulty} />
-            <div className="flex items-center space-x-1 text-gaming-gold">
-              <Star className="w-4 h-4" aria-hidden="true" />
-              <span className="text-sm font-medium">{task.xp} XP</span>
-            </div>
-            {onEdit && (
-              <button 
-                onClick={() => onEdit(task.id)}
-                aria-label={`Edit task ${task.title}`}
-                className="p-1 text-gray-400 hover:text-white"
-              >
-                <Edit className="w-4 h-4" />
-              </button>
-            )}
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded flex items-center space-x-1"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create</span>
+            </button>
           </div>
-        </div>
-
-        {task.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {task.tags.map(tag => (
-              <span
-                key={tag}
-                className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded"
-                aria-label={`Tag: ${tag}`}
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4 text-sm text-gray-400">
-            {task.dueDate && (
-              <div className="flex items-center space-x-1">
-                <Calendar className="w-4 h-4" aria-hidden="true" />
-                <time 
-                  dateTime={new Date(task.dueDate).toISOString()}
-                  className={isOverdue ? 'text-red-400' : ''}
-                >
-                  {new Date(task.dueDate).toLocaleDateString()}
-                </time>
-              </div>
-            )}
-
-            {task.verificationRequired && (
-              <div className="flex items-center space-x-1">
-                {task.verificationMethod === 'proof-required' && (
-                  <Camera className="w-4 h-4" aria-label="Proof required" />
-                )}
-                {task.verificationMethod === 'peer-review' && (
-                  <Users className="w-4 h-4" aria-label="Peer review required" />
-                )}
-                <span className="text-xs">Verification Required</span>
-              </div>
-            )}
-
-            {task.isRecurring && (
-              <div className="flex items-center space-x-1">
-                <Clock className="w-4 h-4" aria-label="Recurring task" />
-                <span className="text-xs">Recurring</span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center space-x-2">
-            {task.status === 'pending' && (
-              <button
-                onClick={handleStartTask}
-                className="flex items-center space-x-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-                aria-label={`Start task ${task.title}`}
-              >
-                <Play className="w-4 h-4" />
-                <span className="text-sm">Start</span>
-              </button>
-            )}
-
-            {(task.status === 'in-progress' || task.status === 'pending') && (
-              <button
-                onClick={handleComplete}
-                disabled={isCompleting}
-                className="flex items-center space-x-1 px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded transition-colors disabled:opacity-75"
-                aria-label={`Complete task ${task.title}`}
-              >
-                {isCompleting ? (
-                  <span className="animate-pulse">...</span>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span className="text-sm">Complete</span>
-                  </>
-                )}
-              </button>
-            )}
-
-            {task.status === 'completed' && (
-              <div className="flex items-center space-x-1 text-green-400">
-                <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-                <span className="text-sm">Completed</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {task.proof && (
-          <div className="mt-3 p-2 bg-gray-700/50 rounded border">
-            <div className="flex items-center space-x-2">
-              {task.proof.type === 'screenshot' && <Camera className="w-4 h-4 text-blue-400" />}
-              {task.proof.type === 'link' && <LinkIcon className="w-4 h-4 text-blue-400" />}
-              <span className="text-sm text-gray-300">Proof submitted</span>
-            </div>
-            {task.proof.description && (
-              <p className="text-xs text-gray-400 mt-1">{task.proof.description}</p>
-            )}
-          </div>
-        )}
-      </motion.div>
-
-      <XPGainAnimation
-        xp={task.xp}
-        trigger={showXPGain}
-        onComplete={() => setShowXPGain(false)}
-      />
-    </>
+        </motion.div>
+      </div>
+    </Dialog>
   );
-});
+};
 
-TaskModal.displayName = 'TaskModal';
 export default TaskModal;
